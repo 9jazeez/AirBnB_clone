@@ -4,6 +4,7 @@
 This module contains the base model for all other classes
 It contains common attributes/methods for other classes
 """
+import models
 from datetime import datetime
 from uuid import uuid4
 
@@ -28,6 +29,7 @@ class BaseModel():
             self.id = str(uuid4())
             self.created_at = datetime.now()
             self.updated_at = datetime.now()
+            models.storage.new(self)
 
     def __str__(self):
         """str rep of class"""
@@ -38,6 +40,7 @@ class BaseModel():
     def save(self):
         """Updates the public instance with updated_at """
         self.updated_at = datetime.now()
+        models.storage.save()
 
     def to_dict(self):
         """First level of serialization/deserialization for the base model"""
