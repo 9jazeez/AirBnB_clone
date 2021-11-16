@@ -7,29 +7,57 @@ This is the module for interactive console
 
 import cmd
 import sys
-import string
+import re
 from models.base_model import BaseModel
+from models.user import User
+from models.amenity import Amenity
+from models.city import City
+from models.place import Place
+from models.review import Review
+from models.state import State
 from models import storage
+
+
+def rearrange(arg):
+    """Helps to rearrange the argument for
+    console command use.
+    """
+    pro = re.compile(r'\b(\W+)+')
+    pro2 = re.compile(r'(?<=(\(\")).*[^("\)]')
+    result = pro.split(arg)
+
+    if result:
+        clsName = result[0]
+        command = result[2]
+        result2 = pro2.search(arg)
+        argv = clsName + " " + result2.group()
+        return (argv, command)
+    else:
+        return (result, None)
+
 
 class HBNBCommand(cmd.Cmd):
     """The base case that inherits from the cmd lib"""
+    __list = ["BaseModel", "User", "State",
+              "City", "Amenity", "Place",
+              "Review"]
 
     def __init__(self):
         cmd.Cmd.__init__(self)
-        self.intro = "HBNB Clone for Alx"
         self.prompt = '(hbnb) '
-    
+
     def do_create(self, arg):
         """To create a new model use create <nameofmodel>"""
         if arg:
-            if arg == "BaseModel":
-                arg = BaseModel()
-                arg.name = "Model@"+ arg.created_at.strftime("%M")
-                arg.number = arg.id[0:5]
-                arg.save()
-                print(arg.id)
-            elif arg not in ["BaseModel", "user"]:
-                print("** Class doesn't exists **")
+            if arg not in self.__list:
+                print("** class doesn't exits **")
+            else:
+                for keys in self.__list:
+                    if arg == keys:
+                        arg = eval(arg)()
+                        print(type(arg))
+                        arg.save()
+                        print(arg.id)
         else:
             print("** Class name missing **")
 
@@ -43,8 +71,8 @@ class HBNBCommand(cmd.Cmd):
 
                 arg1 = arg.split()[0]
                 arg2 = arg.split()[1]
-                argc = arg1 + "." + arg2   
-                if arg1 not in ["BaseModel", "user"]:
+                argc = arg1 + "." + arg2
+                if arg1 not in self.__list:
                     print("** Class doesn't exit **")
                 elif arg2:
                     ids = storage.all()
@@ -60,7 +88,7 @@ class HBNBCommand(cmd.Cmd):
     def do_destroy(self, arg):
         """This command deletes the class instance
 
-        Usage: destroy <class name> <class id> 
+        Usage: destroy <class name> <class id>
 
         """
         if arg:
@@ -68,8 +96,8 @@ class HBNBCommand(cmd.Cmd):
 
                 arg1 = arg.split()[0]
                 arg2 = arg.split()[1]
-                argc = arg1 + "." + arg2  
-                if arg1 not in ["BaseModel", "user"]:
+                argc = arg1 + "." + arg2
+                if arg1 not in self.__list:
                     print("** Class doesn't exit **")
                 elif arg2:
                     ids = storage.all()
@@ -88,7 +116,7 @@ class HBNBCommand(cmd.Cmd):
         based on or not the class name
         """
         if arg:
-            if arg not in ["BaseModel", "user"]:
+            if arg not in self.__list:
                 print("** class doesn't exit **")
             else:
                 obj = storage.all()
@@ -97,6 +125,31 @@ class HBNBCommand(cmd.Cmd):
         else:
             obj = storage.all()
             for val in obj.values():
+                print(val)
+
+    def count_inst(self, arg):
+        """This prints all string representation of the all instances
+        based on or not the class name
+        """
+        if arg.split(".")[0] not in self.__list:
+            print("** Class doesn't exist **")
+        else:
+            obj = storage.all()
+            count = 0
+            for key in obj.keys():
+                if arg.split(".")[0] == key.split(".")[0]:
+                    count = count + 1
+            print(count)
+
+    def do_all2(self, arg):
+        """This prints all string representation of the all instances
+        based on or not the class name
+        """
+        obj = storage.all()
+        count = 0
+        for key, val in obj.items():
+            if arg.split(".")[0] == key.split(".")[0]:
+                count = count + 1
                 print(val)
 
     def do_update(self, arg):
@@ -111,12 +164,12 @@ class HBNBCommand(cmd.Cmd):
             length = len(ar)
             if length >= 4:
                 clName = ar[0]
-                if clName not in ["BaseModel", "user"]:
+                if clName not in self.__list:
                     print("** class doesn't exit **")
                 else:
                     id = ar[1]
                     attr = ar[2]
-                    attr_value = ar[3]
+                    attr_value = arg.split('"')[1]
                     class_tag = clName + "." + id
                     obj = storage.all()
                     if class_tag in obj.keys():
@@ -138,7 +191,7 @@ class HBNBCommand(cmd.Cmd):
         """Quit command to end the program\n"""
         quit()
         return True
-    
+
     def close(self):
         self.close()
         return True
@@ -149,8 +202,25 @@ class HBNBCommand(cmd.Cmd):
 
     def default(self, arg):
         """Let shell to use flags and short hand\n"""
+
+        comm = {"show": "self.do_show",
+                "create": "self.do_create",
+                "destroy": "self.do_destroy",
+                "update": "self.do_update"
+                }
+
         if arg == 'q' or arg == 'x':
             self.do_quit(arg)
+        elif arg.split(".")[0] in self.__list \
+                and arg.split(".")[1] == "all()":
+            self.do_all2(arg)
+        elif arg.split(".")[1] == "count()":
+            self.count_inst(arg)
+        elif arg.split(".")[0] in self.__list:
+            newarg, command = rearrange(arg)
+            for key, val in comm.items():
+                if command == key:
+                    eval(val)(newarg)
         else:
             cmd.Cmd.default(self, arg)
 

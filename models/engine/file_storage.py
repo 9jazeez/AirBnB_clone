@@ -8,12 +8,19 @@ Module for file storage for base models
 import json
 from models.base_model import BaseModel
 from os import path
+from models.user import User
+from models.place import Place
+from models.review import Review
+from models.amenity import Amenity
+from models.city import City
+from models.state import State
 import sys
 
 
 class FileStorage:
     """ A class that helps to serializes to a JSON 
     and deserializes file to an instace of Basemodel
+    and the user
     """
     __file_path = "file.json"
     __objects = dict()
