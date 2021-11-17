@@ -26,11 +26,15 @@ def rearrange(arg):
     pro2 = re.compile(r'(?<=(\(\")).*[^("\)]')
     result = pro.split(arg)
 
-    if result:
+    if result is not None:
         clsName = result[0]
         command = result[2]
+
         result2 = pro2.search(arg)
-        argv = clsName + " " + result2.group()
+        if result2 is not None:
+            argv = clsName + " " + result2.group()
+        else:
+            argv = clsName
         return (argv, command)
     else:
         return (result, None)
@@ -50,16 +54,15 @@ class HBNBCommand(cmd.Cmd):
         """To create a new model use create <nameofmodel>"""
         if arg:
             if arg not in self.__list:
-                print("** class doesn't exits **")
+                print("** class doesn't exist **")
             else:
                 for keys in self.__list:
                     if arg == keys:
                         arg = eval(arg)()
-                        print(type(arg))
                         arg.save()
                         print(arg.id)
         else:
-            print("** Class name missing **")
+            print("** class name missing **")
 
     def do_show(self, arg):
         """This prints the string representation of an instance
@@ -73,7 +76,7 @@ class HBNBCommand(cmd.Cmd):
                 arg2 = arg.split()[1]
                 argc = arg1 + "." + arg2
                 if arg1 not in self.__list:
-                    print("** Class doesn't exit **")
+                    print("** Class doesn't exist **")
                 elif arg2:
                     ids = storage.all()
                     if argc in ids.keys():
@@ -98,7 +101,7 @@ class HBNBCommand(cmd.Cmd):
                 arg2 = arg.split()[1]
                 argc = arg1 + "." + arg2
                 if arg1 not in self.__list:
-                    print("** Class doesn't exit **")
+                    print("** Class doesn't exist **")
                 elif arg2:
                     ids = storage.all()
                     if argc in ids.keys():
@@ -117,7 +120,7 @@ class HBNBCommand(cmd.Cmd):
         """
         if arg:
             if arg not in self.__list:
-                print("** class doesn't exit **")
+                print("** class doesn't exist **")
             else:
                 obj = storage.all()
                 for val in obj.values():
@@ -165,7 +168,7 @@ class HBNBCommand(cmd.Cmd):
             if length >= 4:
                 clName = ar[0]
                 if clName not in self.__list:
-                    print("** class doesn't exit **")
+                    print("** class doesn't exist **")
                 else:
                     id = ar[1]
                     attr = ar[2]
@@ -189,16 +192,13 @@ class HBNBCommand(cmd.Cmd):
 
     def do_quit(self, arg):
         """Quit command to end the program\n"""
-        quit()
-        return True
-
-    def close(self):
-        self.close()
-        return True
+        print("")
+        return (True)
 
     def do_EOF(self, arg):
         """This uses EOF to stop the program\n"""
-        sys.exit(1)
+        print()
+        return (True)
 
     def default(self, arg):
         """Let shell to use flags and short hand\n"""
@@ -211,18 +211,29 @@ class HBNBCommand(cmd.Cmd):
 
         if arg == 'q' or arg == 'x':
             self.do_quit(arg)
-        elif arg.split(".")[0] in self.__list \
-                and arg.split(".")[1] == "all()":
-            self.do_all2(arg)
-        elif arg.split(".")[1] == "count()":
-            self.count_inst(arg)
-        elif arg.split(".")[0] in self.__list:
-            newarg, command = rearrange(arg)
-            for key, val in comm.items():
-                if command == key:
-                    eval(val)(newarg)
+        elif re.search(r'\.', arg) is not None:
+            if arg.split(".")[0] in self.__list \
+                    and arg.split(".")[1] == "all()":
+                self.do_all2(arg)
+            elif arg.split(".")[1] == "count()":
+                self.count_inst(arg)
+            elif arg.split(".")[0] in self.__list:
+                newarg, command = rearrange(arg)
+                if newarg is not None:
+                    for key, val in comm.items():
+                        if command == key:
+                            eval(val)(newarg)
+                else:
+                    cmd.Cmd.default(self, arg)
+            else:
+                cmd.Cmd.default(self, arg)
         else:
             cmd.Cmd.default(self, arg)
+
+    def do_help(self, arg):
+        """Uses parent help to print help"""
+        print()
+        cmd.Cmd.do_help(self, arg)
 
     def emptyline(self):
         """ Empty line should pass\n"""
