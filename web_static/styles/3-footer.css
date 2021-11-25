@@ -1,4 +1,4 @@
-footer p {
+footer p{
 	top: 10%;
 	bottom: 0;
 	right: 0;
@@ -11,7 +11,7 @@ footer {
 	
 	background-color : white;
 	bottom : 0;
-	border-bottom: 1px #CCCCCC;
+	border-top: 1px solid #CCCCCC;
 	position : fixed;
 	height : 60px;
 	width : 100%;
